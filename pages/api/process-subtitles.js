@@ -1,6 +1,6 @@
-const fs = require('fs');
-const path = require('path');
-const { spawn } = require('child_process');
+import fs from 'fs-extra';
+import path from 'path';
+import { spawn } from 'child_process';
 
 export const config = {
   api: {

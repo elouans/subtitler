@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, ChangeEvent, FormEvent } from 'react';
 import { Upload } from 'lucide-react';
 
 export default function SubtitleAdjuster() {
@@ -7,8 +7,14 @@ export default function SubtitleAdjuster() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
 
-  const handleFileChange = (e: any) => {
-    const selectedFile = e.target.files[0];
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) {
+      setError('Please select a valid .srt file');
+      setFile(null);
+      return;
+    }
+    const selectedFile = files[0];
     if (selectedFile && selectedFile.name.endsWith('.srt')) {
       setFile(selectedFile);
       setError('');
@@ -18,7 +24,7 @@ export default function SubtitleAdjuster() {
     }
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
     if (!file || !timeStep) {
