@@ -121,6 +121,7 @@ export default async function handler(req, res) {
     res.setHeader('Content-Disposition', `attachment; filename="adjusted_${originalFilename}"`);
     res.send(processedContent);
   } catch (error) {
-    res.status(500).json({ error: 'Something' });
+    console.error('Error processing subtitle:', error); // Log the error to the console for debugging
+    res.status(500).json({ error: error.message || 'Something went wrong' });
   }
 }
