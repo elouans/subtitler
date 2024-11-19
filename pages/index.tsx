@@ -46,33 +46,30 @@ export default function SubtitleProcessor() {
     setIsProcessing(true);
     setTranslateProgress("Starting translation...");
     setError("");
-
+  
     const formData = new FormData();
     formData.append("file", translateFile);
     formData.append("fromLang", fromLang);
     formData.append("toLang", toLang);
-
+  
     try {
       const response = await fetch("/api/translate_subtitles", {
         method: "POST",
         body: formData,
       });
-
+  
       if (!response.ok) throw new Error(response.statusText);
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
-
-      if (reader) {
-        let progressChunk = "";
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          progressChunk += decoder.decode(value, { stream: true });
-          setTranslateProgress(progressChunk);
-        }
-      }
-
+  
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `translated_${translateFile.name}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+  
       setTranslateProgress("Translation completed.");
     } catch (err) {
       setError("Failed to process translation. Please try again.");

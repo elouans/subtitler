@@ -8,7 +8,7 @@ export const config = {
   },
 };
 
-const runPythonTranslation = (inputPath, outputPath, fromLang, toLang, onProgress) => {
+const runPythonTranslation = (inputPath, outputPath, fromLang, toLang) => {
   return new Promise((resolve, reject) => {
     const pythonProcess = spawn('python', [
       path.join(process.cwd(), 'scripts', 'translate_srt.py'), // Path to the Python script
@@ -18,13 +18,9 @@ const runPythonTranslation = (inputPath, outputPath, fromLang, toLang, onProgres
       toLang,
     ]);
 
-    pythonProcess.stdout.on('data', (data) => {
-      const progress = data.toString();
-      onProgress(progress);
-    });
-
     pythonProcess.stderr.on('data', (data) => {
       console.error(`Python script error: ${data}`);
+      reject(new Error(data.toString()));
     });
 
     pythonProcess.on('close', (code) => {
@@ -43,11 +39,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Create temporary storage directory
     const tempDir = path.join(process.cwd(), 'temp');
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
+    await fs.promises.mkdir(tempDir, { recursive: true });
 
     // Collect multipart form data
     const chunks = [];
@@ -67,7 +60,7 @@ export default async function handler(req, res) {
     const originalFilename = fileNameMatch ? fileNameMatch[1] : 'file.srt';
     const inputPath = path.join(tempDir, `temp_${originalFilename}`);
 
-    fs.writeFileSync(inputPath, fileContent);
+    await fs.promises.writeFile(inputPath, fileContent);
 
     // Extract language codes
     const fromLang = parts.find((part) => part.includes('name="fromLang"')).split('\r\n\r\n')[1].trim();
@@ -76,27 +69,22 @@ export default async function handler(req, res) {
     // Output path for the translated file
     const outputPath = path.join(tempDir, `translated_${originalFilename}`);
 
-    // SSE to send progress updates
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
     // Start the translation process
-    await runPythonTranslation(inputPath, outputPath, fromLang, toLang, (progress) => {
-      res.write(`data: ${progress}\n\n`); // Send progress updates to the client
-    });
+    await runPythonTranslation(inputPath, outputPath, fromLang, toLang);
 
-    // Send the translated file as a download link
-    const translatedContent = fs.readFileSync(outputPath);
-    res.write(`data: Translation completed. Downloading file...\n\n`);
-    res.write(`data: ${Buffer.from(translatedContent).toString('base64')}\n\n`); // Send file content as Base64 for client-side handling
-    res.end();
+    // Read and send the translated file
+    const translatedContent = await fs.promises.readFile(outputPath);
+
+    // Set response headers and send file
+    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Content-Disposition', `attachment; filename="translated_${originalFilename}"`);
+    res.send(translatedContent);
 
     // Clean up temporary files
-    fs.unlinkSync(inputPath);
-    fs.unlinkSync(outputPath);
+    await fs.promises.unlink(inputPath);
+    await fs.promises.unlink(outputPath);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to process translation' });
+    console.error('Error translating subtitles:', error);
+    res.status(500).json({ error: error.message || 'Something went wrong' });
   }
 }

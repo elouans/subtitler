@@ -6,6 +6,9 @@ import os
 import re
 from pathlib import Path
 
+import warnings
+warnings.filterwarnings("ignore", message="You are using `torch.load` with `weights_only=False`")
+
 def setup_translation(from_code, to_code):
     """Set up translation package."""
     argostranslate.package.update_package_index()
