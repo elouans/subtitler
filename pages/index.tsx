@@ -21,7 +21,7 @@ export default function SubtitleProcessor() {
   const [timeStep, setTimeStep] = useState("");
   const [adjustProgress, setAdjustProgress] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState("");
+  const [, setError] = useState("");
 
   const handleFileChange = (
     e: ChangeEvent<HTMLInputElement>,
@@ -72,7 +72,7 @@ export default function SubtitleProcessor() {
   
       setTranslateProgress("Translation completed.");
     } catch (err) {
-      setError("Failed to process translation. Please try again.");
+      setError("Failed to process translation. Please try again. Error: " + (err instanceof Error ? err.message : "Unknown error"));
     } finally {
       setIsProcessing(false);
     }
@@ -112,7 +112,7 @@ export default function SubtitleProcessor() {
 
       setAdjustProgress("Time adjustment completed.");
     } catch (err) {
-      setError("Failed to process subtitle adjustment. Please try again.");
+      setError("Failed to process subtitle adjustment. Please try again. Error: " + (err instanceof Error ? err.message : "Unknown error"));
     } finally {
       setIsProcessing(false);
     }
