@@ -39,8 +39,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const tempDir = path.join(process.cwd(), 'temp');
-    await fs.promises.mkdir(tempDir, { recursive: true });
+    const tempDir = '/tmp'; // Use /tmp as the temp directory
 
     // Collect multipart form data
     const chunks = [];
@@ -58,7 +57,7 @@ export default async function handler(req, res) {
     const fileContent = filePart.slice(fileContentStart, fileContentEnd);
     const fileNameMatch = filePart.match(/filename="(.+?)"/);
     const originalFilename = fileNameMatch ? fileNameMatch[1] : 'file.srt';
-    const inputPath = path.join(tempDir, `temp_${originalFilename}`);
+    const inputPath = path.join(tempDir, `tmp_${originalFilename}`);
 
     await fs.promises.writeFile(inputPath, fileContent);
 

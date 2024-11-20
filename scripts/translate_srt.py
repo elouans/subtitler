@@ -1,3 +1,4 @@
+
 import sys
 import json
 import argostranslate.package
@@ -5,7 +6,6 @@ import argostranslate.translate
 import os
 import re
 from pathlib import Path
-
 import warnings
 warnings.filterwarnings("ignore", message="You are using `torch.load` with `weights_only=False`")
 
